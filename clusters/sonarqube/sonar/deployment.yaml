@@ -79,11 +79,11 @@ spec:
               protocol: TCP
           resources:
             limits:
-              cpu: 2000m   #800m
-              memory: 4Gi
-            requests:
-              cpu: 800m   #400m
+              cpu: 800m   #800m
               memory: 2Gi
+            requests:
+              cpu: 500m   #400m
+              memory: 1Gi
           env:
             - name: SONAR_WEB_JAVAOPTS
               value: "-javaagent:/opt/sonarqube/data/jmx_prometheus_javaagent.jar=8000:/opt/sonarqube/conf/prometheus-config.yaml"
