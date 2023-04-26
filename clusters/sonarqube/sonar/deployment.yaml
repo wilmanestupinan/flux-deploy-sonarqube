@@ -79,8 +79,8 @@ spec:
               protocol: TCP
           resources:
             limits:
-              cpu: 800m   #800m
-              memory: 2Gi
+              cpu: 500m   #800m
+              memory: 1Gi
             requests:
               cpu: 500m   #400m
               memory: 1Gi
