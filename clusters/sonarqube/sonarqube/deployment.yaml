@@ -1,0 +1,214 @@
+# Source: sonarqube/templates/sonarqube-sts.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: sonarqube-sonarqube
+  labels:
+    app: sonarqube
+    chart: sonarqube-1.1.9_137
+    release: sonarqube
+    heritage: Helm
+    app.kubernetes.io/name: sonarqube-sonarqube-sonarqube
+    app.kubernetes.io/instance: sonarqube
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: sonarqube
+    app.kubernetes.io/component: sonarqube-sonarqube
+    app.kubernetes.io/version: "9.1.0-community"
+  namespace: sonarqube
+spec:
+  replicas: 1
+  serviceName: sonarqube-sonarqube
+  selector:
+    matchLabels:
+      app: sonarqube
+      release: sonarqube
+  template:
+    metadata:
+      labels:
+        app: sonarqube
+        release: sonarqube
+      annotations:
+        checksum/init-sysctl: 1a349dff42f758a0c1ea6f7aba741866e08a0c177258f5a796c440a589697981
+        checksum/init-fs: a02ac2e403e39f5da61b5f9921344d1a9b4eafe3b60ba32ae41501fb47dd8318
+        checksum/plugins: 7c3eea3b08ea7a1d80a06a7b071f08fb648dff64448621bd5380cff45eb4ac04
+        checksum/config: dfe4f69d298b136efb0b651776fe060351f927500843f95c60e472004a2642ce
+        checksum/secret: 96c821b076b0a6fbc2e292c7571f9ed1da1f0567960006a25dc53fd99154be55
+        checksum/prometheus-config: a3e325fff297c1d60edeb6b8273277b6fe8b53a8e3d6866abb1a43f8bff59051
+        checksum/prometheus-ce-config: ea8bd1e6b0a3c9c27a85de9a6a69e2cb56f2fc19525af8e22176ff805028a43c
+    spec:
+      initContainers:
+        - name: init-sysctl
+          image: busybox:1.32
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            privileged: true
+          resources: {}
+          command: ["sh", "-e", "/tmp/scripts/init_sysctl.sh"]
+          volumeMounts:
+            - name: init-sysctl
+              mountPath: /tmp/scripts/
+        - name: inject-prometheus-exporter
+          image: curlimages/curl:7.76.1
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsGroup: 0
+            runAsUser: 0
+          resources: {}
+          command: ["/bin/sh", "-c"]
+          args:
+            [
+              "curl -s 'https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.16.0/jmx_prometheus_javaagent-0.16.0.jar'  --output /data/jmx_prometheus_javaagent.jar -v",
+            ]
+          volumeMounts:
+            - mountPath: /data
+              name: sonarqube
+              subPath: data
+          env:
+            - name: http_proxy
+              value:
+            - name: https_proxy
+              value:
+            - name: no_proxy
+              value:
+      containers:
+        - name: sonarqube
+          image: "sonarqube:9.1.0-community"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 9000
+              protocol: TCP
+            - name: monitoring-web
+              containerPort: 8000
+              protocol: TCP
+            - name: monitoring-ce
+              containerPort: 8001
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 2000m   #800m
+              memory: 4Gi
+            requests:
+              cpu: 800m   #400m
+              memory: 2Gi
+          env:
+            - name: SONAR_WEB_JAVAOPTS
+              value: "-javaagent:/opt/sonarqube/data/jmx_prometheus_javaagent.jar=8000:/opt/sonarqube/conf/prometheus-config.yaml"
+            - name: SONAR_CE_JAVAOPTS
+              value: "-javaagent:/opt/sonarqube/data/jmx_prometheus_javaagent.jar=8001:/opt/sonarqube/conf/prometheus-ce-config.yaml"
+            - name: SONAR_JDBC_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sonarqube-mysql
+                  key: mysql-password
+            - name: SONAR_WEB_SYSTEMPASSCODE
+              valueFrom:
+                secretKeyRef:
+                  name: sonarqube-sonarqube-monitoring-passcode
+                  key: SONAR_WEB_SYSTEMPASSCODE
+          envFrom:
+            - configMapRef:
+                name: sonarqube-sonarqube-jdbc-config
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - |
+                  #!/bin/bash
+                  # A Sonarqube container is considered healthy if the health status is GREEN or YELLOW
+                  host="$(hostname -i || echo '127.0.0.1')"
+                  if wget --header="X-Sonar-Passcode: ${SONAR_WEB_SYSTEMPASSCODE}" -qO- http://${host}:9000/api/system/health | grep -q -e '"health":"GREEN"' -e '"health":"YELLOW"'; then
+                  	exit 0
+                  fi
+                  exit 1
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - |
+                  #!/bin/bash
+                  # A Sonarqube container is considered ready if the status is UP, DB_MIGRATION_NEEDED or DB_MIGRATION_RUNNING
+                  # status about migration are added to prevent the node to be kill while sonarqube is upgrading the database.
+                  host="$(hostname -i || echo '127.0.0.1')"
+                  if wget -qO- http://${host}:9000/api/system/status | grep -q -e '"status":"UP"' -e '"status":"DB_MIGRATION_NEEDED"' -e '"status":"DB_MIGRATION_RUNNING"'; then
+                  	exit 0
+                  fi
+                  exit 1
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            failureThreshold: 6
+          startupProbe:
+            httpGet:
+              scheme: HTTP
+              path: /api/system/status
+              port: 9000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 24
+          securityContext:
+            runAsUser: 1000
+          volumeMounts:
+            - mountPath: /opt/sonarqube/data
+              name: sonarqube
+              subPath: data
+            - mountPath: /opt/sonarqube/temp
+              name: sonarqube
+              subPath: temp
+            - mountPath: /opt/sonarqube/logs
+              name: sonarqube
+              subPath: logs
+            - mountPath: /tmp
+              name: tmp-dir
+            - mountPath: /opt/sonarqube/conf/prometheus-config.yaml
+              subPath: prometheus-config.yaml
+              name: prometheus-config
+            - mountPath: /opt/sonarqube/conf/prometheus-ce-config.yaml
+              subPath: prometheus-ce-config.yaml
+              name: prometheus-ce-config
+      tolerations:
+        - key: "node-type"
+          operator: "Equal"
+          value: "devops-tools"
+          effect: "NoSchedule"
+      # nodeSelector:
+      #   devops-tools: "true"
+      serviceAccountName: default
+      volumes:
+        - name: init-sysctl
+          configMap:
+            name: sonarqube-sonarqube-init-sysctl
+            items:
+              - key: init_sysctl.sh
+                path: init_sysctl.sh
+        - name: init-fs
+          configMap:
+            name: sonarqube-sonarqube-init-fs
+            items:
+              - key: init_fs.sh
+                path: init_fs.sh
+        - name: install-plugins
+          configMap:
+            name: sonarqube-sonarqube-install-plugins
+            items:
+              - key: install_plugins.sh
+                path: install_plugins.sh
+        - name: prometheus-config
+          configMap:
+            name: sonarqube-sonarqube-prometheus-config
+            items:
+              - key: prometheus-config.yaml
+                path: prometheus-config.yaml
+        - name: prometheus-ce-config
+          configMap:
+            name: sonarqube-sonarqube-prometheus-ce-config
+            items:
+              - key: prometheus-ce-config.yaml
+                path: prometheus-ce-config.yaml
+        - name: sonarqube
+          emptyDir: {}
+        - name: tmp-dir
+          emptyDir: {}

@@ -1,0 +1,21 @@
+# Source: sonarqube/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: sonarqube-sonarqube
+  labels:
+    app: sonarqube
+    chart: sonarqube-1.1.9_137
+    release: sonarqube
+    heritage: Helm
+  namespace: sonarqube
+spec:
+  type: NodePort
+  ports:
+    - port: 9000
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: sonarqube
+    release: sonarqube

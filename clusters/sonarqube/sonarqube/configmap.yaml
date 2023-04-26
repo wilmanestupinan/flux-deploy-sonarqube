@@ -1,0 +1,119 @@
+# Source: sonarqube/templates/config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sonarqube-sonarqube-config
+  labels:
+    app: sonarqube
+    chart: sonarqube-1.1.9_137
+    release: sonarqube
+    heritage: Helm
+  namespace: sonarqube
+data:
+---
+# Source: sonarqube/templates/init-fs.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sonarqube-sonarqube-init-fs
+  labels:
+    app: sonarqube
+    chart: sonarqube-1.1.9_137
+    release: sonarqube
+    heritage: Helm
+  namespace: sonarqube
+data:
+  init_fs.sh: |-
+---
+# Source: sonarqube/templates/init-sysctl.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sonarqube-sonarqube-init-sysctl
+  labels:
+    app: sonarqube
+    chart: sonarqube-1.1.9_137
+    release: sonarqube
+    heritage: Helm
+  namespace: sonarqube
+data:
+  init_sysctl.sh: |-
+    if [[ "$(sysctl -n vm.max_map_count)" -lt 524288 ]]; then
+      sysctl -w vm.max_map_count=524288
+    fi
+    if [[ "$(sysctl -n fs.file-max)" -lt 131072 ]]; then
+      sysctl -w fs.file-max=131072
+    fi
+    if [[ "$(ulimit -n)" != "unlimited" ]]; then
+      if [[ "$(ulimit -n)" -lt 131072 ]]; then
+        echo "ulimit -n 131072"
+        ulimit -n 131072
+      fi
+    fi
+    if [[ "$(ulimit -u)" != "unlimited" ]]; then
+      if [[ "$(ulimit -u)" -lt 8192 ]]; then
+        echo "ulimit -u 8192"
+        ulimit -u 8192
+      fi
+    fi
+---
+# Source: sonarqube/templates/install-plugins.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sonarqube-sonarqube-install-plugins
+  labels:
+    app: sonarqube
+    chart: sonarqube-1.1.9_137
+    release: sonarqube
+    heritage: Helm
+  namespace: sonarqube
+data:
+  install_plugins.sh: |-
+---
+# Source: sonarqube/templates/jdbc-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sonarqube-sonarqube-jdbc-config
+  labels:
+    app: sonarqube
+    chart: sonarqube-1.1.9_137
+    release: sonarqube
+    heritage: Helm
+  namespace: sonarqube
+data:
+  SONAR_JDBC_USERNAME: "sonardb"
+  SONAR_JDBC_URL: "jdbc:postgresql://motor-impuestos-rds-1.cypluwl0qecx.us-east-1.rds.amazonaws.com:5432/currencyexchange_dev"
+---
+# Source: sonarqube/templates/prometheus-ce-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sonarqube-sonarqube-prometheus-ce-config
+  labels:
+    app: sonarqube
+    chart: sonarqube-1.1.9_137
+    release: sonarqube
+    heritage: Helm
+  namespace: sonarqube
+data:
+  prometheus-ce-config.yaml: |-
+    rules:
+    - pattern: .*
+---
+# Source: sonarqube/templates/prometheus-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sonarqube-sonarqube-prometheus-config
+  labels:
+    app: sonarqube
+    chart: sonarqube-1.1.9_137
+    release: sonarqube
+    heritage: Helm
+  namespace: sonarqube
+data:
+  prometheus-config.yaml: |-
+    rules:
+    - pattern: .*
