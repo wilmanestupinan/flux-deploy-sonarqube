@@ -70,8 +70,8 @@ metadata:
     heritage: Helm
   namespace: sonarqube
 data:
-  SONAR_JDBC_USERNAME: "sonardb"
-  SONAR_JDBC_URL: "jdbc:postgresql://motor-impuestos-rds-1.cypluwl0qecx.us-east-1.rds.amazonaws.com:5432/currencyexchange_dev"
+  SONAR_JDBC_USERNAME: "admin"
+  SONAR_JDBC_URL: "jdbc:postgresql://localhost:5432/postgresdb"
 ---
 # Source: sonarqube/templates/prometheus-ce-config.yaml
 apiVersion: v1
