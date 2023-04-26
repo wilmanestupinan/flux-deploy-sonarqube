@@ -1,16 +1,3 @@
-# Source: sonarqube/templates/config.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: sonarqube-sonarqube-config
-  labels:
-    app: sonarqube
-    chart: sonarqube-1.1.9_137
-    release: sonarqube
-    heritage: Helm
-  namespace: sonarqube
-data:
----
 # Source: sonarqube/templates/init-fs.yaml
 apiVersion: v1
 kind: ConfigMap

@@ -4,13 +4,13 @@ metadata:
   name: sonarqube-ingress
   namespace: sonarqube
   annotations:
-    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-1:021568609343:certificate/9a53494b-51f9-4e57-9ec4-1c4ff186a3eb
+    # alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-1:021568609343:certificate/9a53494b-51f9-4e57-9ec4-1c4ff186a3eb
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
   ingressClassName: nginx-sonarqube
   rules:
-    - host: sonarqube.dev-tax-engine.prismamp.com
-      http:
+    # - host: sonarqube.dev-tax-engine.prismamp.com
+    - http:
         paths:
           - path: /
             pathType: Prefix

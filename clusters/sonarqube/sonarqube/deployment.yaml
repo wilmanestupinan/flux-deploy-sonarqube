@@ -62,14 +62,7 @@ spec:
           volumeMounts:
             - mountPath: /data
               name: sonarqube
-              subPath: data
-          env:
-            - name: http_proxy
-              value:
-            - name: https_proxy
-              value:
-            - name: no_proxy
-              value:
+              subPath: data         
       containers:
         - name: sonarqube
           image: "sonarqube:9.1.0-community"
