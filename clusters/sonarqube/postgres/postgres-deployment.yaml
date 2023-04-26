@@ -19,6 +19,7 @@ spec:
           imagePullPolicy: "IfNotPresent"
           ports:
             - containerPort: 5432
+            - name: postgres
           envFrom:
             - configMapRef:
                 name: postgres-config
