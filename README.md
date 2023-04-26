@@ -53,3 +53,29 @@ NAMESPACE=flux-system \
 kubectl proxy & \
 kubectl get namespace $NAMESPACE -o json |jq '.spec = {"finalizers":[]}' >temp.json \
 curl -k -H "Content-Type: application/json" -X PUT --data-binary @temp.json 127.0.0.1:8001/api/v1/namespaces/$NAMESPACE/finalize)
+
+
+aws sts get-caller-identity --profile ic-dev
+
+aws eks list-clusters --profile ic-dev
+
+aws eks --region us-east-1 update-kubeconfig --name eks-dev-1 > dev.yaml --profile ic-dev
+
+export KUBECONFIG=$KUBECONFIG:~/.kube/config:shared.yaml:dev.yaml
+
+
+
+  # Print the reconciliation logs of all Flux custom resources in your cluster
+  flux logs --all-namespaces
+  
+  # Print all logs of all Flux custom resources newer than 2 minutes
+  flux logs --all-namespaces --since=2m
+
+  # Stream logs for a particular log level
+  flux logs --follow --level=error --all-namespaces
+
+  # Filter logs by kind, name and namespace
+  flux logs --kind=Kustomization --name=podinfo --namespace=default
+
+  # Print logs when Flux is installed in a different namespace than flux-system
+  flux logs --flux-namespace=my-namespace
