@@ -47,7 +47,8 @@ flux create kustomization podinfo \
 
   (
 
-## Error to delete namespace in kuberneten when it is terminating state
+## Error to delete namespace in kubernetes when it is terminating state
+
 NAMESPACE=flux-system \
 kubectl proxy & \
 kubectl get namespace $NAMESPACE -o json |jq '.spec = {"finalizers":[]}' >temp.json \
