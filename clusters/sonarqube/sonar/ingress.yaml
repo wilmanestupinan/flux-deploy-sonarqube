@@ -9,8 +9,8 @@ metadata:
 spec:
   ingressClassName: nginx-sonarqube
   rules:
-    # - host: sonarqube.dev-tax-engine.prismamp.com
-    - http:
+    - host: sonarqube.dev-tax-engine.prismamp.com
+      http:
         paths:
           - path: /
             pathType: Prefix
