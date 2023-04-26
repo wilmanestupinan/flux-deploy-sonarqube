@@ -26,13 +26,13 @@ spec:
         ports:
         - containerPort: 3306
           name: mysql
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "250m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
+        # resources:
+        #   requests:
+        #     memory: "256Mi"
+        #     cpu: "250m"
+        #   limits:
+        #     memory: "512Mi"
+        #     cpu: "500m"
         volumeMounts:
         - name: mysql-persistent-storage
           mountPath: /var/lib/mysql
